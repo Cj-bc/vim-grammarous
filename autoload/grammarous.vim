@@ -11,7 +11,22 @@ let s:job_is_available = has('job') && has('patch-8.0.0027')
 
 let s:grammarous_root                            = fnamemodify(expand('<sfile>'), ':p:h:h')
 
-let g:grammarous#jar_dir                         = get(g:, 'grammarous#jar_dir', s:grammarous_root . '/misc')
+function! s:check_homebrew_langtool()
+  if ! executable('brew') || ! executable('languagetool')
+    return s:grammarous_root . '/misc'
+  endif
+
+  let s:brew_path = split(system('brew --prefix'), '', 'g')[0]
+  let s:langtool_version = split(system('languagetool --version'), ' ', 'g')[2]
+  let s:langtool_path = s:brew_path . '/Cellar/languagetool/' . s:langtool_version .  '/libexec'
+  if filereadable(s:langtool_path . '/languagetool.jar')
+    return s:langtool_path
+  endif
+
+  return s:grammarous_root . '/misc'
+endfunction
+
+let g:grammarous#jar_dir                         = get(g:, 'grammarous#jar_dir', s:check_homebrew_langtool())
 let g:grammarous#jar_url                         = get(g:, 'grammarous#jar_url', 'https://www.languagetool.org/download/LanguageTool-stable.zip')
 let g:grammarous#java_cmd                        = get(g:, 'grammarous#java_cmd', 'java')
 let g:grammarous#default_lang                    = get(g:, 'grammarous#default_lang', 'en')
